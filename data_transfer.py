@@ -58,15 +58,17 @@ def add_soh_snl(cell_id, file):
     df['SoH (%)'] = np.nan
 
     # Capacity measurements seem to be indicated by an empty cycle
-    measurements = [i for i, ch in enumerate(df['Charge_Capacity (Ah)']) if ch == 0]
+    pre_measurement_condition = (df['Charge_Capacity (Ah)'] == 0) & (df['Discharge_Capacity (Ah)'] == 0) & (
+           # df['Min_Voltage (V)'] > 0) & (df['Max_Voltage (V)'] > 0) & (
+                                        df['Min_Current (A)'] == 0) & (df['Max_Current (A)'] == 0)
+    measurements = [i for i, cond in enumerate(pre_measurement_condition) if cond]
 
     for i in measurements:
         # The capacity is measured in the next 3 cycles.
 
         for j in range(i + 1, min(i + 4, len(df))):
-            # Sometimes there are not exactly 3 measurements
-            if df['Discharge_Capacity (Ah)'][df.index[j]] == 0:
-                break
+            if j in measurements:
+                continue
             df.at[df.index[j], 'SoH (%)'] = df['Discharge_Capacity (Ah)'][df.index[j]] / capacity * 100
 
     df.to_csv(file)
