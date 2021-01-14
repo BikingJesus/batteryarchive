@@ -62,7 +62,7 @@ def add_soh_snl(cell_id, file):
             df['Min_Voltage (V)'] > 0) & (df['Max_Voltage (V)'] > 0) & (
                                         df['Min_Current (A)'] == 0) & (df['Max_Current (A)'] == 0)
     measurements = [i for i, cond in enumerate(pre_measurement_condition) if cond]
-    #Starting point
+    # Starting point
     measurements += [-1]
 
     for i in measurements:
@@ -88,11 +88,23 @@ def add_soh(cell_id, file):
 
     capacity = metadata['capacity_ah'][cell_id]
     df = pd.read_csv(file, index_col=0)
+    df.sort_values(by='Cycle_Index', inplace=True)
     df['SoH (%)'] = df['Discharge_Capacity (Ah)'] / capacity * 100
     df.to_csv(file)
 
 
-def get_all(cycle_data, time_series, destination, soh):
+def add_fec(cell_id, file):
+    min_soc = metadata['min_soc'][cell_id]
+    max_soc = metadata['max_soc'][cell_id]
+
+    dod = max_soc - min_soc
+
+    df = pd.read_csv(file)
+    df['Full Equivalent Cycles'] = df['Cycle_Index'] * dod / 100
+    df.to_csv(file, index=False)
+
+
+def get_all(cycle_data, time_series, destination, soh, fec):
     prefix = "https://www.batteryarchive.org/data/"
     destination = Path(destination)
     try:
@@ -112,6 +124,9 @@ def get_all(cycle_data, time_series, destination, soh):
 
             if soh:
                 add_soh(cell_id, cycle_data_file)
+
+            if fec:
+                add_fec(cell_id, cycle_data_file)
 
         print("Done downloading files. Thank you for using www.batteryarchive.org")
         print("For questions on how to add your data, contact info@batteryarchive.org")
@@ -138,10 +153,14 @@ if __name__ == '__main__':
                         help='If set, the time series will be downloaded')
     parser.add_argument('--soh', dest='soh', action='store_true',
                         help='If set, soh will be calculated')
+    parser.add_argument('--fec', dest='fec', action='store_true',
+                        help='If set, full equivalent cycles will be added')
     args = parser.parse_args()
 
     get_all(
         cycle_data=args.cycle,
         time_series=args.time,
         destination=args.dest,
-        soh=args.soh)
+        soh=args.soh,
+        fec=args.fec
+    )
