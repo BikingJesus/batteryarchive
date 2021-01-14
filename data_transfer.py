@@ -111,7 +111,22 @@ def add_fec(cell_id, file):
     df.to_csv(file, index=False)
 
 
-def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta):
+def add_metadata(cell_id, file, metadata_keys):
+    if not metadata_keys:
+        return
+
+    df = pd.read_csv(file)
+    for m in metadata_keys:
+        if m not in metadata.columns:
+            print(f'{m} is not a proper column name in "{metadata_file}". Available are: {", ".join(metadata.columns)}',
+                  file=sys.stderr)
+            exit(1)
+        df[m] = metadata[m][cell_id]
+
+    df.to_csv(file, index=False)
+
+
+def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta, metadata_keys):
     prefix = "https://www.batteryarchive.org/data/"
     destination = Path(destination)
     try:
@@ -134,10 +149,12 @@ def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta):
             if cycle_data:
                 cycle_data = prefix + file_name + "_cycle_data.csv"
                 get_file(cycle_data, cycle_data_file)
+                add_metadata(cell_id, cycle_data_file, metadata_keys)
 
             if time_series:
                 time_data = prefix + file_name + "_timeseries.csv"
                 get_file(time_data, time_series_file)
+                add_metadata(cell_id, time_series_file, metadata_keys)
 
             if soh:
                 add_soh(cell_id, cycle_data_file)
@@ -175,6 +192,9 @@ if __name__ == '__main__':
     parser.add_argument('--dir-by-meta-data', dest='dir_by_meta', nargs='+', type=str, default=list(),
                         help='You can specify several metadata columns.'
                              ' The corresponding values will be used as folders.')
+    parser.add_argument('--meta-data', dest='metadata', nargs='+', type=str, default=list(),
+                        help='You can specify metadata to be added as columns to the data.')
+
     args = parser.parse_args()
 
     get_all(
@@ -183,4 +203,5 @@ if __name__ == '__main__':
         destination=args.dest,
         soh=args.soh,
         fec=args.fec,
-        dir_by_meta=args.dir_by_meta)
+        dir_by_meta=args.dir_by_meta,
+        metadata_keys=args.metadata)
