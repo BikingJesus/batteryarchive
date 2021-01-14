@@ -62,6 +62,8 @@ def add_soh_snl(cell_id, file):
             df['Min_Voltage (V)'] > 0) & (df['Max_Voltage (V)'] > 0) & (
                                         df['Min_Current (A)'] == 0) & (df['Max_Current (A)'] == 0)
     measurements = [i for i, cond in enumerate(pre_measurement_condition) if cond]
+    #Starting point
+    measurements += [-1]
 
     for i in measurements:
         # The capacity is measured in the next cycles around that empty cycle.
