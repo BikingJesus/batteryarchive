@@ -48,6 +48,30 @@ def get_file(path, save_to_file_name):
     csv_file.close()
 
 
+def add_soh_snl(cell_id, file):
+    capacity = metadata['capacity_ah'][cell_id]
+
+    df = pd.read_csv(file, index_col=0)
+
+    # e.g. see SNL_18650_NMC_25C_20-80_0.5-3C_a_cycle_data.csv
+    df.drop_duplicates(subset=df.columns, inplace=True)
+    df['SoH (%)'] = np.nan
+
+    # Capacity measurements seem to be indicated by an empty cycle
+    measurements = [i for i, ch in enumerate(df['Charge_Capacity (Ah)']) if ch == 0]
+
+    for i in measurements:
+        # The capacity is measured in the next 3 cycles.
+
+        for j in range(i + 1, min(i + 4, len(df))):
+            # Sometimes there are not exactly 3 measurements
+            if df['Discharge_Capacity (Ah)'][df.index[j]] == 0:
+                break
+            df.at[df.index[j], 'SoH (%)'] = df['Discharge_Capacity (Ah)'][df.index[j]] / capacity * 100
+
+    df.to_csv(file)
+
+
 def add_soh(cell_id, file):
     if not file.exists():
         print(
