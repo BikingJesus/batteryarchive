@@ -64,9 +64,8 @@ def add_soh_snl(cell_id, file):
     measurements = [i for i, cond in enumerate(pre_measurement_condition) if cond]
 
     for i in measurements:
-        # The capacity is measured in the next 3 cycles.
-
-        for j in range(i + 1, min(i + 4, len(df))):
+        # The capacity is measured in the next cycles around that empty cycle.
+        for j in range(max(0, i - 2), min(i + 4, len(df))):
             if j in measurements:
                 continue
             df.at[df.index[j], 'SoH (%)'] = df['Discharge_Capacity (Ah)'][df.index[j]] / capacity * 100
