@@ -53,7 +53,7 @@ def add_soh_snl(cell_id, file):
 
     df = pd.read_csv(file, index_col=0)
 
-    # e.g. see SNL_18650_NMC_25C_20-80_0.5-3C_a_cycle_data.csv
+    # see e.g. SNL_18650_NMC_25C_20-80_0.5-3C_a_cycle_data.csv
     df.drop_duplicates(subset=df.columns, inplace=True)
     df['SoH (%)'] = np.nan
 
@@ -62,11 +62,12 @@ def add_soh_snl(cell_id, file):
             df['Min_Voltage (V)'] > 0) & (df['Max_Voltage (V)'] > 0) & (
                                         df['Min_Current (A)'] == 0) & (df['Max_Current (A)'] == 0)
     measurements = [i for i, cond in enumerate(pre_measurement_condition) if cond]
+
     # Starting point
     measurements += [-1]
 
     for i in measurements:
-        # The capacity is measured in the next cycles around that empty cycle.
+        # The capacity is measured in the cycles around that empty cycle.
         for j in range(max(0, i - 2), min(i + 4, len(df))):
             if j in measurements:
                 continue
@@ -121,7 +122,7 @@ def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta):
 
             for meta_dir in dir_by_meta:
                 if meta_dir not in metadata.columns:
-                    print(f'{meta_dir} is not an column name available. Available are {", ".join(metadata.columns)}',
+                    print(f'{meta_dir} is not a proper column name in {data_set}. Available are: {", ".join(metadata.columns)}',
                           file=sys.stderr)
                     return
                 folder /= metadata[meta_dir][cell_id]
