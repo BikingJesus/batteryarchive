@@ -34,8 +34,8 @@ import requests
 import numpy as np
 from tqdm import tqdm
 
-data_set = 'metadata'
-metadata = pd.read_csv("./metadata.csv", index_col=0)
+metadata_file = Path('metadata.csv')
+metadata = pd.read_csv(metadata_file, index_col=0)
 
 
 def get_file(path, save_to_file_name):
@@ -122,8 +122,9 @@ def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta):
 
             for meta_dir in dir_by_meta:
                 if meta_dir not in metadata.columns:
-                    print(f'{meta_dir} is not a proper column name in {data_set}. Available are: {", ".join(metadata.columns)}',
-                          file=sys.stderr)
+                    print(
+                        f'{meta_dir} is not a proper column name in "{metadata_file}". Available are: {", ".join(metadata.columns)}',
+                        file=sys.stderr)
                     return
                 folder /= metadata[meta_dir][cell_id]
 
