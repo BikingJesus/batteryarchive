@@ -173,7 +173,7 @@ if __name__ == '__main__':
                         help='If set, full equivalent cycles will be added')
     parser.add_argument('--dir-by-meta-data', dest='dir_by_meta', nargs='+', type=str, default=list(),
                         help='You can specify several metadata columns.'
-                             ' The corresponding will be used as folders.')
+                             ' The corresponding values will be used as folders.')
     args = parser.parse_args()
 
     get_all(
