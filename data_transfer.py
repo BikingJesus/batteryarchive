@@ -59,7 +59,7 @@ def add_soh_snl(cell_id, file):
 
     # Capacity measurements seem to be indicated by an empty cycle
     pre_measurement_condition = (df['Charge_Capacity (Ah)'] == 0) & (df['Discharge_Capacity (Ah)'] == 0) & (
-           # df['Min_Voltage (V)'] > 0) & (df['Max_Voltage (V)'] > 0) & (
+            df['Min_Voltage (V)'] > 0) & (df['Max_Voltage (V)'] > 0) & (
                                         df['Min_Current (A)'] == 0) & (df['Max_Current (A)'] == 0)
     measurements = [i for i, cond in enumerate(pre_measurement_condition) if cond]
 
