@@ -94,6 +94,12 @@ def add_soh(cell_id, file):
 
 
 def add_fec(cell_id, file):
+    if not file.exists():
+        print(
+            f'File "{file}" not found. Cannot add Full Equivalent Cycle column.'
+            f' If not yet downloaded use the --cycle-data flag',
+            file=sys.stderr)
+        return
     min_soc = metadata['min_soc'][cell_id]
     max_soc = metadata['max_soc'][cell_id]
 
@@ -104,15 +110,24 @@ def add_fec(cell_id, file):
     df.to_csv(file, index=False)
 
 
-def get_all(cycle_data, time_series, destination, soh, fec):
+def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta):
     prefix = "https://www.batteryarchive.org/data/"
     destination = Path(destination)
     try:
         print(metadata)
         for cell_id in tqdm(metadata.index):
             file_name = cell_id.replace("/", "-")
-            cycle_data_file = destination / f'{file_name}_cycle_data.csv'
-            time_series_file = destination / f'{file_name}_timeseries.csv'
+            folder = destination
+
+            for meta_dir in dir_by_meta:
+                if meta_dir not in metadata.columns:
+                    print(f'{meta_dir} is not an column name available. Available are {", ".join(metadata.columns)}',
+                          file=sys.stderr)
+                    return
+                folder /= metadata[meta_dir][cell_id]
+
+            cycle_data_file = folder / f'{file_name}_cycle_data.csv'
+            time_series_file = folder / f'{file_name}_timeseries.csv'
 
             if cycle_data:
                 cycle_data = prefix + file_name + "_cycle_data.csv"
@@ -155,6 +170,9 @@ if __name__ == '__main__':
                         help='If set, soh will be calculated')
     parser.add_argument('--fec', dest='fec', action='store_true',
                         help='If set, full equivalent cycles will be added')
+    parser.add_argument('--dir-by-meta-data', dest='dir_by_meta', nargs='+', type=str, default=list(),
+                        help='You can specify several metadata columns.'
+                             ' The corresponding will be used as folders.')
     args = parser.parse_args()
 
     get_all(
@@ -162,5 +180,5 @@ if __name__ == '__main__':
         time_series=args.time,
         destination=args.dest,
         soh=args.soh,
-        fec=args.fec
-    )
+        fec=args.fec,
+        dir_by_meta=args.dir_by_meta)
