@@ -27,11 +27,11 @@
 # under certain conditions; type `show c' for details.
 
 import argparse
+import sys
 from pathlib import Path
-
 import pandas as pd
 import requests
-
+import numpy as np
 from tqdm import tqdm
 
 data_set = 'metadata'
@@ -49,10 +49,18 @@ def get_file(path, save_to_file_name):
 
 
 def add_soh(cell_id, file):
-    #TODO different for SNL
+    if not file.exists():
+        print(
+            f'File "{file}" not found. Cannot add SoH. If not yet downloaded use the --cycle-data flag',
+            file=sys.stderr)
+        return
+
+    if metadata['study'][cell_id].lower() == 'snl':
+        add_soh_snl(cell_id, file)
+        return
+
     capacity = metadata['capacity_ah'][cell_id]
     df = pd.read_csv(file, index_col=0)
-
     df['SoH (%)'] = df['Discharge_Capacity (Ah)'] / capacity * 100
     df.to_csv(file)
 
@@ -76,9 +84,6 @@ def get_all(cycle_data, time_series, destination, soh):
                 get_file(time_data, time_series_file)
 
             if soh:
-                if not cycle_data:
-                    raise Exception('SoH is only available together with cycle_data')
-
                 add_soh(cell_id, cycle_data_file)
 
         print("Done downloading files. Thank you for using www.batteryarchive.org")
