@@ -27,13 +27,19 @@
 # under certain conditions; type `show c' for details.
 
 import argparse
+from pathlib import Path
+
 import pandas as pd
 import requests
-import sys
+
+from tqdm import tqdm
+
+data_set = 'metadata'
+metadata = pd.read_csv("./metadata.csv", index_col=0)
 
 
 def get_file(path, save_to_file_name):
-    print(path)
+    save_to_file_name.parent.mkdir(exist_ok=True, parents=True)
     req = requests.get(path)
     url_content = req.content
     csv_file = open(save_to_file_name, 'wb')
@@ -42,40 +48,52 @@ def get_file(path, save_to_file_name):
     csv_file.close()
 
 
-def get_all(cycle_data, time_series, dest):
-    data_set = 'metadata'
+def add_soh(cell_id, file):
+    #TODO different for SNL
+    capacity = metadata['capacity_ah'][cell_id]
+    df = pd.read_csv(file, index_col=0)
+
+    df['SoH (%)'] = df['Discharge_Capacity (Ah)'] / capacity * 100
+    df.to_csv(file)
+
+
+def get_all(cycle_data, time_series, destination, soh):
     prefix = "https://www.batteryarchive.org/data/"
+    destination = Path(destination)
     try:
-        df_snl = pd.read_csv("./" + data_set + ".csv")
-        print(df_snl)
-
-        number_of_cells = str(len(df_snl))
-
-        for ind in df_snl.index:
-            cell_id = df_snl['cell_id'][ind]
+        print(metadata)
+        for cell_id in tqdm(metadata.index):
             file_name = cell_id.replace("/", "-")
+            cycle_data_file = destination / f'{file_name}_cycle_data.csv'
+            time_series_file = destination / f'{file_name}_timeseries.csv'
 
             if cycle_data:
-                print(str(ind + 1) + " of " + number_of_cells + ": Cycle data cell_id: " + cell_id)
                 cycle_data = prefix + file_name + "_cycle_data.csv"
-                get_file(cycle_data, dest + "/" + file_name + "_cycle_data.csv")
+                get_file(cycle_data, cycle_data_file)
 
             if time_series:
-                print(str(ind + 1) + " of " + number_of_cells + ": Time data cell_id: " + cell_id)
                 time_data = prefix + file_name + "_timeseries.csv"
-                get_file(time_data, dest + "/" + file_name + "_timeseries.csv")
+                get_file(time_data, time_series_file)
+
+            if soh:
+                if not cycle_data:
+                    raise Exception('SoH is only available together with cycle_data')
+
+                add_soh(cell_id, cycle_data_file)
 
         print("Done downloading files. Thank you for using www.batteryarchive.org")
         print("For questions on how to add your data, contact info@batteryarchive.org")
 
 
     except OSError as e:
-        print("Error reading data_set: " + str(e))
+        print("Error reading data_set: ")
         print("please send the complete message to info@batteryarchive.org")
+        raise
 
-    except:
-        print("Unexpected error: ", sys.exc_info()[0])
+    except Exception as e:
+        print("Unexpected error: ")
         print("please send the complete message to info@batteryarchive.org")
+        raise
 
 
 if __name__ == '__main__':
@@ -86,9 +104,12 @@ if __name__ == '__main__':
                         help='If set, the cycle data will be downloaded')
     parser.add_argument('--time-series', '-t', dest='time', action='store_true',
                         help='If set, the time series will be downloaded')
+    parser.add_argument('--soh', dest='soh', action='store_true',
+                        help='If set, soh will be calculated')
     args = parser.parse_args()
 
     get_all(
         cycle_data=args.cycle,
         time_series=args.time,
-        dest=args.dest)
+        destination=args.dest,
+        soh=args.soh)
