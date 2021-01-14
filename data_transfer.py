@@ -125,7 +125,7 @@ def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta):
                     print(
                         f'{meta_dir} is not a proper column name in "{metadata_file}". Available are: {", ".join(metadata.columns)}',
                         file=sys.stderr)
-                    return
+                    exit(1)
                 folder /= metadata[meta_dir][cell_id]
 
             cycle_data_file = folder / f'{file_name}_cycle_data.csv'
