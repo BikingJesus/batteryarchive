@@ -94,10 +94,10 @@ def add_soh(cell_id, file):
     df.to_csv(file)
 
 
-def add_fec(cell_id, file):
+def add_efc(cell_id, file):
     if not file.exists():
         print(
-            f'File "{file}" not found. Cannot add Full Equivalent Cycle column.'
+            f'File "{file}" not found. Cannot add equivalent full cycle column.'
             f' If not yet downloaded use the --cycle-data flag',
             file=sys.stderr)
         return
@@ -107,7 +107,7 @@ def add_fec(cell_id, file):
     dod = max_soc - min_soc
 
     df = pd.read_csv(file)
-    df['Full Equivalent Cycles'] = df['Cycle_Index'] * dod / 100
+    df['Equivalent Full Cycles'] = df['Cycle_Index'] * dod / 100
     df.to_csv(file, index=False)
 
 
@@ -126,7 +126,7 @@ def add_metadata(cell_id, file, metadata_keys):
     df.to_csv(file, index=False)
 
 
-def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta, metadata_keys):
+def get_all(cycle_data, time_series, destination, soh, efc, dir_by_meta, metadata_keys):
     prefix = "https://www.batteryarchive.org/data/"
     destination = Path(destination)
     try:
@@ -159,8 +159,8 @@ def get_all(cycle_data, time_series, destination, soh, fec, dir_by_meta, metadat
             if soh:
                 add_soh(cell_id, cycle_data_file)
 
-            if fec:
-                add_fec(cell_id, cycle_data_file)
+            if efc:
+                add_efc(cell_id, cycle_data_file)
 
         print("Done downloading files. Thank you for using www.batteryarchive.org")
         print("For questions on how to add your data, contact info@batteryarchive.org")
@@ -187,8 +187,8 @@ if __name__ == '__main__':
                         help='If set, the time series will be downloaded')
     parser.add_argument('--soh', dest='soh', action='store_true',
                         help='If set, soh will be calculated')
-    parser.add_argument('--fec', dest='fec', action='store_true',
-                        help='If set, full equivalent cycles will be added')
+    parser.add_argument('--efc', dest='efc', action='store_true',
+                        help='If set, equivalent full cycles will be added')
     parser.add_argument('--dir-by-meta-data', dest='dir_by_meta', nargs='+', type=str, default=list(),
                         help='You can specify several metadata columns.'
                              ' The corresponding values will be used as folders.')
@@ -202,6 +202,6 @@ if __name__ == '__main__':
         time_series=args.time,
         destination=args.dest,
         soh=args.soh,
-        fec=args.fec,
+        efc=args.efc,
         dir_by_meta=args.dir_by_meta,
         metadata_keys=args.metadata)
